@@ -19,9 +19,8 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
                 'Chrome/19.0.1084.46 Safari/536.5'),
                ('Mozilla/5.0 (Windows; Windows NT 6.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/  19.0.1084.46'
                 'Safari/536.5'), )
-
 now = datetime.now()
-now = datetime.now() - timedelta(days=2)
+
 
 def get_news_article_info(url):
     article = Article(url)
@@ -74,7 +73,7 @@ def realestate_gyunghyang(keywords_list):
                 if not article_date.startswith(today):
                     continue
                 if cnt == 0:
-                    print('[경향신문 부동산]')
+                    print('\n📰 경향신문')
                 print(li.img['alt'])
                 print(li.a['href'])
                 keywords = get_news_article_info(li.a['href'])
@@ -111,7 +110,7 @@ def realestate_kookmin(keywords_list):
                 title.find('부동산') != -1):
 
                 if cnt == 0:
-                    print('[국민일보 부동산]')
+                    print('\n📰 국민일보')
                 print(title)
                 print(href)
                 keywords = get_news_article_info(href)
@@ -139,7 +138,7 @@ def realestate_nocut(keywords_list):
         if not article_date.startswith(today):
             continue
         if cnt == 0:
-            print('[노컷뉴스 부동산]')
+            print('\n📰 노컷뉴스')
         print(title)
         print(href)
         keywords = get_news_article_info(href)
@@ -162,7 +161,7 @@ def realestate_donga(keywords_list):
         if not article_date.startswith(today):
             continue
         if cnt == 0:
-            print('[동아일보 부동산]')
+            print('\n📰 동아일보')
         print(title)
         print(alist.a['href'])
         keywords = get_news_article_info(alist.a['href'])
@@ -187,7 +186,7 @@ def realestate_mbn(keywords_list):
             if not article_date.startswith(today):
                 continue
             if cnt == 0:
-                print('[매일경제 부동산]')
+                print('\n📰 매일경제')
             print(title)
             print(href)
             cnt += 1
@@ -207,7 +206,7 @@ def realestate_moonhwa(keywords_list):
         if not article_date.startswith(today):
             continue
         if cnt == 0:
-            print('[문화일보 부동산]')
+            print('\n📰 문화일보')
         cnt += 1
         print(td.a['href'])
         print(' '.join(articles[:-1]))
@@ -231,7 +230,7 @@ def realestate_segye(keywords_list):
             if not article_date.startswith(today):
                 continue
             if cnt == 0:
-                print('[세계일보 부동산]')
+                print('\n📰 세계일보')
             cnt += 1
             print(title)
             print(href)
@@ -266,7 +265,7 @@ def realestate_joins(keywords_list):
             if not article_date.startswith(today):
                 continue
             if cnt == 0:
-                print('[중앙일보 부동산]')
+                print('\n📰 중앙일보')
             cnt += 1
             print(title)
             print(href)
@@ -292,7 +291,7 @@ def realestate_chosun(keywords_list):
             if not article_date.startswith(today):
                 continue
             if cnt == 0:
-                print('[조선일보 부동산]')
+                print('\n📰 조선일보')
             cnt += 1
             print(title)
             print(href)
@@ -300,30 +299,36 @@ def realestate_chosun(keywords_list):
             keywords_list.extend(keywords)
 
 def realestate_hani(keywords_list):
+    cnt = 0
     r = request_and_get(' http://www.hani.co.kr/arti/economy/property/home01.html')
     if r is None:
         return
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
 
     base_url = 'http://www.hani.co.kr'
     soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
     for article in soup.find_all(match_soup_class(['article-area'])):
-        print(article)
-        continue
+        article_date = article.find('span', attrs={'class': 'date'}).text
         href = '%s%s' % (base_url, article.a['href'])
         article = article.text.strip().split('\n')
         title = check_valid_string(article[0])
-        # print(title, href)
+        if not article_date.startswith(today):
+            continue
+        if cnt == 0:
+            print('\n📰 한겨례신문')
+        cnt += 1
+        print(title)
+        print(href)
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
     return
 
-def realestate_hankyung(self,  keywords_list):
-    result = '<hr class="noprint" style="width: 96ex;" align="left"/><a name="t0011" id="t0011" href="#t0011" class="invisible"> </a><font color="blue">[한국경제 부동산 뉴스]</font><br>'
+def realestate_hankyung(keywords_list):
+    cnt = 0
     r = request_and_get('http://land.hankyung.com/')
     if r is None:
-        result = '%s<br>No article.' % result
-        return result
-
+        return
+    today = '%4d%02d%02d' % (now.year, now.month, now.day)
     soup = BeautifulSoup(r.content.decode('euc-kr', 'replace'), 'html.parser')
     sessions = soup.select('div > h2 > a')
     for s in sessions:
@@ -331,17 +336,23 @@ def realestate_hankyung(self,  keywords_list):
             continue
         href = s['href']
         title = check_valid_string(s.text)
+        article_date = href.split('/')[-1]
+        if not article_date.startswith(today):
+            continue
+        if cnt == 0:
+            print('\n📰 한국경제')
+        cnt += 1
+        print(title)
+        print(href)
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
-        result = '%s<br><a href="%s" target="_blank">%s</a>' % (result, href, title)
-    return result
 
-def realestate_naver(self,  keywords_list):
-    result = '<hr class="noprint" style="width: 96ex;" align="left"/><a name="t0013" id="t0013" href="#t0013" class="invisible"> </a><font color="blue">[Naver 부동산 뉴스]</font><br>'
+
+def realestate_naver(keywords_list):
     r = request_and_get('http://land.naver.com/news/headline.nhn')
     if r is None:
-        result = '%s<br>No article.' % result
-        return result
+        return
+    print('\n📰 NAVER')
 
     base_url = 'http://land.naver.com'
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -350,7 +361,9 @@ def realestate_naver(self,  keywords_list):
         href = '%s%s' % (base_url, s['href'])
         title = check_valid_string(s.text)
         keywords = get_news_article_info(href)
-        result = '%s<br><a href="%s" target="_blank">%s</a>' % (result, href, title)
+        keywords_list.extend(keywords)
+        print(title)
+        print(href)
 
     sessions = soup.select('div > ul > li > dl > dt > a')
     for s in sessions:
@@ -358,31 +371,15 @@ def realestate_naver(self,  keywords_list):
             continue
         href = '%s%s' % (base_url, s['href'])
         title = check_valid_string(s.text)
+        print(title)
+        print(href)
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
-        result = '%s<br><a href="%s" target="_blank">%s</a>' % (result, href, title)
-    return result
+    return
 
-def realestate_nate(self,  keywords_list):
-    result = '<hr class="noprint" style="width: 96ex;" align="left"/><a name="t0014" id="t0014" href="#t0014" class="invisible"> </a><font color="blue">[네이트 부동산 뉴스]</font><br>'
-    url = 'http://news.nate.com/subsection?cate=eco03&mid=n0303&type=c&date=%s&page=1' % today
-    r = request_and_get(url)
-    if r is None:
-        result = '%s<br>No article.' % result
-        return result
 
-    soup = BeautifulSoup(r.text, 'html.parser')
-    for news in soup.find_all(match_soup_class(['mlt01'])):
-        span = news.find('span', attrs={'class': 'tb'})
-        tit = span.find('strong', attrs={'class': 'tit'})
-        title = check_valid_string(tit.text)
-        keywords = get_news_article_info(news.a['href'])
-        keywords_list.extend(keywords)
-        result = '%s<br><a href="%s" target="_blank">%s</a>' % (result, news.a['href'], title)
-    return result
-
-def realestate_daum(self,  keywords_list):
-    result = '<hr class="noprint" style="width: 96ex;" align="left"/><a name="t0015" id="t0015" href="#t0015" class="invisible"> </a><font color="blue">[Daum 부동산 뉴스]</font><br>'
+def realestate_daum(keywords_list):
+    print('\n📰 DAUM')
     r = request_and_get('http://realestate.daum.net/news')
     soup = BeautifulSoup(r.text, 'html.parser')
     for f in soup.find_all(match_soup_class(['link_news'])):
@@ -393,17 +390,11 @@ def realestate_daum(self,  keywords_list):
         title = check_valid_string(f.text)
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
-        result = '%s<br><a href="%s" target="_blank">%s</a>' % (result, href, title)
-    return result
+        print(title)
+        print(href)
 
 def realestate_news(self,  press, keywords_list):
     return
-    #elif press == '한겨례':
-    #    return self.realestate_hani( keywords_list)
-    #elif press == '한국경제':
-    #    return self.realestate_hankyung( keywords_list)
-    #elif press == '네이버':
-    #    return self.realestate_naver( keywords_list)
     #elif press == '네이트':
     #    return self.realestate_nate( keywords_list)
     #elif press == '다음':
@@ -416,7 +407,7 @@ async def fetch(self, subject, loop,  keywords_list, category):
     if category == 'realestate':
         result = await loop.run_in_executor(None, self.realestate_news,  subject, keywords_list)
 
-def get_keywords(self, keywords_list):
+def get_keywords(keywords_list):
     return [val for sublist in keywords_list for val in sublist
             if len(val) > 2 and
             not val.startswith('있') and not val.startswith('것') and
@@ -429,48 +420,33 @@ def get_keywords(self, keywords_list):
             val != '하지만' and 
             val != '기자수첩']
 
-async def post_realestate(self, loop):
-    press_list = ['경향신문', '국민일보', '노컷뉴스', '동아일보', '매일경제',
-                  '문화일보', '세계신문', '중앙일보', '조선일보', '한겨례',
-                  '한국경제', '한국일보', '네이버', '네이트', '다음']
-    keywords_list = []
-    futures = [asyncio.ensure_future(self.fetch(press, loop,  keywords_list, 'realestate')) for press in press_list]
-    result = await asyncio.gather(*futures)  # 결과를 한꺼번에 가져옴
-
-    keywords = self.get_keywords(keywords_list)
-    counter = Counter(keywords)
-    common_keywords = [c[0] for c in counter.most_common(5)]
-    content = '''<strong>언론사 목록</strong><br>
-<a href="#t0001">경향신문, </a> <a href="#t0002">국민일보, </a> <a href="#t0003">노컷뉴스, </a><br>
-<a href="#t0004">동아일보, </a> <a href="#t0005">매일경제, </a> <a href="#t0006">문화일보, </a><br>
-<a href="#t0007">세계신문, </a> <a href="#t0008">중앙일보, </a> <a href="#t0009">조선일보, </a><br>
-<a href="#t0010">한겨례, </a> <a href="#t0011">한국경제, </a> <a href="#t0012">한국일보, </a><br>
-<strong>포털사이트</strong><br>
-<a href="#t0013">Naver, </a> <a href="#t0014">Nate, </a> <a href="#t0015">Daum</a><br><br>
-<strong>오늘의 주요 키워드</strong><br>
-%s<br>
-    ''' % (', '.join(common_keywords))
-    for r in result:
-        content = '%s<br>%s<br><br>' % (content, r)
-    title = '[%s] 국내 주요언론사 부동산 뉴스 헤드라인(ㄱ, ㄴ순)' % today
-    tistory_post('scrapnpost', title, content, '765348')
-    naver_post(title, content)
-
 
 def main():
     keywords_list = []
-    # realestate_mbn(keywords_list)
-    # realestate_chosun(keywords_list)
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    print('(JP official)')
+    print([today], '부동산 헤드라인 모음\n')
 
-    # realestate_gyunghyang(keywords_list)
-    # realestate_kookmin(keywords_list)
-    # realestate_nocut(keywords_list)
-    # realestate_donga(keywords_list)
-    # realestate_moonhwa(keywords_list)
-    # realestate_segye(keywords_list)
-    # realestate_joins(keywords_list)
+    realestate_naver(keywords_list)
+    realestate_daum(keywords_list)
+    realestate_mbn(keywords_list)
+    realestate_chosun(keywords_list)
+    realestate_hankyung(keywords_list)
+
+    realestate_gyunghyang(keywords_list)
+    realestate_kookmin(keywords_list)
+    realestate_nocut(keywords_list)
+    realestate_donga(keywords_list)
+    realestate_moonhwa(keywords_list)
+    realestate_segye(keywords_list)
+    realestate_joins(keywords_list)
     realestate_hani(keywords_list)
 
+    keywords = get_keywords(keywords_list)
+    counter = Counter(keywords)
+    common_keywords = [c[0] for c in counter.most_common(5)]
+    print('\n\n오늘 부동산 뉴스 주요 키워드')
+    print(common_keywords)
 
 if __name__ == '__main__':
     main()
