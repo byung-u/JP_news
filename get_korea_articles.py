@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-import asyncio
-import json
 import newspaper
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from newspaper import Article
 from bs4 import BeautifulSoup
 from collections import Counter
 from random import choice
 from requests import get, codes
-from selenium import webdriver
-from seleniumrequests import Chrome
 
 USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0',
                'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:22.0) Gecko/20100 101 Firefox/22.0',
@@ -47,6 +43,7 @@ def match_soup_class(target, mode='class'):
         return all(c in classes for c in target)
     return do_match
 
+
 def request_and_get(url):
     try:
         r = get(url, headers={'User-Agent': choice(USER_AGENTS)})
@@ -57,6 +54,7 @@ def request_and_get(url):
     except TypeError:
         print('[%s] connect fail', url)
         return False
+
 
 def realestate_gyunghyang(keywords_list):
     cnt = 0
@@ -104,10 +102,10 @@ def realestate_kookmin(keywords_list):
             href = '%s/%s' % (base_url, dt.a['href'])
             title = check_valid_string(dt.a.text)
             if (title.find('아파트') != -1 or
-                title.find('국토부') != -1 or title.find('국토교통부') != -1 or
-                title.find('전세') != -1 or title.find('전월세') != -1 or
-                title.find('청약') != -1 or title.find('분양') != -1 or
-                title.find('부동산') != -1):
+               title.find('국토부') != -1 or title.find('국토교통부') != -1 or
+               title.find('전세') != -1 or title.find('전월세') != -1 or
+               title.find('청약') != -1 or title.find('분양') != -1 or
+               title.find('부동산') != -1):
 
                 if cnt == 0:
                     print('\n📰 국민일보')
@@ -122,8 +120,7 @@ def realestate_nocut(keywords_list):
     cnt = 0
     r = request_and_get('http://www.nocutnews.co.kr/news/list?c1=203&c2=204&ltype=1')
     if r is None:
-        result = '%s<br>No article.' % result
-        return result
+        return
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
 
     base_url = 'http://www.nocutnews.co.kr'
@@ -144,6 +141,7 @@ def realestate_nocut(keywords_list):
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
     return
+
 
 def realestate_donga(keywords_list):
     cnt = 0
@@ -193,6 +191,7 @@ def realestate_mbn(keywords_list):
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
 
+
 def realestate_moonhwa(keywords_list):
     cnt = 0
     r = request_and_get('http://www.munhwa.com/news/section_list.html?sec=economy&class=5')
@@ -237,6 +236,7 @@ def realestate_segye(keywords_list):
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
 
+
 def realestate_joins(keywords_list):
     cnt = 0
     r = request_and_get('http://realestate.joins.com/?cloc=joongang|section|subsection')
@@ -273,6 +273,7 @@ def realestate_joins(keywords_list):
             # keywords = get_news_article_info(href)
             # keywords_list.extend(keywords)
 
+
 def realestate_chosun(keywords_list):
     cnt = 0
     r = request_and_get('http://biz.chosun.com/svc/list_in/list.html?catid=4&gnb_global')
@@ -298,6 +299,7 @@ def realestate_chosun(keywords_list):
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
 
+
 def realestate_hani(keywords_list):
     cnt = 0
     r = request_and_get(' http://www.hani.co.kr/arti/economy/property/home01.html')
@@ -322,6 +324,7 @@ def realestate_hani(keywords_list):
         keywords = get_news_article_info(href)
         keywords_list.extend(keywords)
     return
+
 
 def realestate_hankyung(keywords_list):
     cnt = 0
@@ -393,19 +396,6 @@ def realestate_daum(keywords_list):
         print(title)
         print(href)
 
-def realestate_news(self,  press, keywords_list):
-    return
-    #elif press == '네이트':
-    #    return self.realestate_nate( keywords_list)
-    #elif press == '다음':
-    #    return self.realestate_daum( keywords_list)
-    #else:
-    #    result = '[' + press + '] No article.'
-    #    return result
-
-async def fetch(self, subject, loop,  keywords_list, category):
-    if category == 'realestate':
-        result = await loop.run_in_executor(None, self.realestate_news,  subject, keywords_list)
 
 def get_keywords(keywords_list):
     return [val for sublist in keywords_list for val in sublist
@@ -417,7 +407,7 @@ def get_keywords(keywords_list):
             val != '한겨레' and val != '네이버' and
             val != '안된다' and val != '부동산' and
             val != '팀장칼럼' and val != '한국의' and
-            val != '하지만' and 
+            val != '하지만' and
             val != '기자수첩']
 
 
@@ -447,6 +437,7 @@ def main():
     common_keywords = [c[0] for c in counter.most_common(5)]
     print('\n\n오늘 부동산 뉴스 주요 키워드')
     print(common_keywords)
+
 
 if __name__ == '__main__':
     main()
