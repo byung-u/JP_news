@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import newspaper
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from newspaper import Article
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -16,6 +16,7 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
                ('Mozilla/5.0 (Windows; Windows NT 6.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/  19.0.1084.46'
                 'Safari/536.5'), )
 now = datetime.now()
+# now = datetime.now() - timedelta(days=1)
 
 
 def get_news_article_info(url):
@@ -72,11 +73,12 @@ def realestate_gyunghyang(keywords_list):
                     continue
                 if cnt == 0:
                     print('\n📰 경향신문')
-                print(li.img['alt'])
-                print(li.a['href'])
-                keywords = get_news_article_info(li.a['href'])
-                keywords_list.extend(keywords)
                 cnt += 1
+                title = li.find('strong', attrs={'class': 'hd_title'})
+                print(title.text)
+                print(title.a['href'])
+                keywords = get_news_article_info(title.a['href'])
+                keywords_list.extend(keywords)
             except TypeError:
                 continue
 
