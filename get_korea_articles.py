@@ -433,7 +433,7 @@ def main():
     realestate_hani(keywords_list)
 
     realestate_naver(keywords_list)
-    realestate_daum(keywords_list)
+    # realestate_daum(keywords_list)
 
     keywords = get_keywords(keywords_list)
     counter = Counter(keywords)
