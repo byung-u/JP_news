@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import newspaper
+import re
 
-from datetime import datetime, timedelta
-from newspaper import Article
 from bs4 import BeautifulSoup
 from collections import Counter
+from datetime import datetime
+from newspaper import Article
 from random import choice
 from requests import get, codes
 
@@ -192,6 +193,68 @@ def realestate_mbn(keywords_list):
             cnt += 1
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
+
+
+def realestate_cnews(keywords_list):
+    base_url = 'http://www.cnews.co.kr/uhtml/read.jsp?idxno='
+    today = '%4d%02d%02d' % (now.year, now.month, now.day)
+    cnt = 0
+    urls = ['http://www.cnews.co.kr/uhtml/autosec/S1N1_S2N12_1.html',  # 분양
+            'http://www.cnews.co.kr/uhtml/autosec/S1N1_S2N13_1.html',  # 도시정비
+            'http://www.cnews.co.kr/uhtml/autosec/S1N1_S2N14_1.html',  # 개발
+            'http://www.cnews.co.kr/uhtml/autosec/S1N1_S2N15_1.html',  # 재태크
+            'http://www.cnews.co.kr/uhtml/autosec/S1N1_S2N16_1.html',  # 부동산시장
+            ]
+    for url in urls:
+        r = request_and_get(url)
+        soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+        for sub_list in soup.find_all(match_soup_class(['sub_main_news_list_2'])):
+            for li in sub_list.find_all('li'):
+                title = li.find('div', {'class': 'title'})
+                article_date = li.a['href'].split("'")[1]
+                if not article_date.startswith(today):
+                    continue
+                if cnt == 0:
+                    print('\n📰 건설경제')
+                cnt += 1
+                href = '%s%s' % (base_url, article_date)
+                print(title.text)
+                print(href)
+                keywords = get_news_article_info(href)
+                keywords_list.extend(keywords)
+
+
+def realestate_sedaily(keywords_list):
+    urls = ['http://www.sedaily.com/NewsList/GB01',   # 정책, 제도
+            'http://www.sedaily.com/NewsList/GB02',   # 분양, 청약
+            'http://www.sedaily.com/NewsList/GB03',   # 아파트, 주택
+            'http://www.sedaily.com/NewsList/GB04',   # 오피스, 상가, 토지
+            'http://www.sedaily.com/NewsList/GB05',   # 건설업계
+            'http://www.sedaily.com/NewsList/GB06',   # 간접투자
+            'http://www.sedaily.com/NewsList/GB07',   # 기획연재
+            ]
+
+    base_url = 'http://www.sedaily.com'
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    cnt = 0
+    for url in urls:
+        r = request_and_get(url)
+        soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+        for news_list in soup.find_all(match_soup_class(['news_list'])):
+            for li in news_list.find_all('li'):
+                dt = li.find('dt')
+                href = '%s%s' % (base_url, dt.a['href'])
+                dd = li.find('dd')
+                article_date = dd.find('span', attrs={'class': 'letter'}).text
+                if not article_date.startswith(today):
+                    continue
+                if cnt == 0:
+                    print('\n📰 서울경제')
+                cnt += 1
+                print(dt.text)
+                print(href)
+                keywords = get_news_article_info(href)
+                keywords_list.extend(keywords)
 
 
 def realestate_moonhwa(keywords_list):
@@ -399,6 +462,29 @@ def realestate_daum(keywords_list):
         print(href)
 
 
+def realestate_cak(keywords_list):
+    r = request_and_get('http://www.cak.or.kr/board/boardList.do?boardId=news_builder&menuId=437#')
+    soup = BeautifulSoup(r.text, 'html.parser')
+    today = '%4d.%02d.%02d' % (now.year, now.month, now.day-2)
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 1:
+                    temp = str(td.a).split('"')[3]
+                    # dataView(35653); -> 35653
+                    data_id = re.findall('\(.*?\d\)', temp)[0][1:-1]
+                    href = 'http://www.cak.or.kr/board/boardView.do?menuId=437&cms_site_id=&sel_tab=&searchCondition=all&searchKeyword=&sidohp=&subhp=&boardId=news_builder&dataId=%s&pageIndex=1' % data_id
+                    title = td.text.strip()
+                    continue
+                if idx == 2:
+                    article_date = td.text.strip()
+                    if not article_date.startswith(today):
+                        continue
+                    print('\n📰 대한건설협회(CAK)')
+                    print(title)
+                    print(href)
+
+
 def get_keywords(keywords_list):
     return [val for sublist in keywords_list for val in sublist
             if len(val) > 2 and
@@ -420,6 +506,8 @@ def main():
     print([today], '부동산 헤드라인 모음\n')
 
     realestate_mbn(keywords_list)
+    realestate_cnews(keywords_list)
+    realestate_sedaily(keywords_list)
     realestate_chosun(keywords_list)
     realestate_hankyung(keywords_list)
 
@@ -434,6 +522,8 @@ def main():
 
     realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
+
+    realestate_cak(keywords_list)
 
     keywords = get_keywords(keywords_list)
     counter = Counter(keywords)
