@@ -20,7 +20,6 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
                ('Mozilla/5.0 (Windows; Windows NT 6.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/  19.0.1084.46'
                 'Safari/536.5'), )
 chromedriver_path = os.environ.get('CHROMEDRIVER_PATH')
-driver = webdriver.Chrome(chromedriver_path)
 now = datetime.now()
 # now = datetime.now() - timedelta(days=1)
 
@@ -89,6 +88,8 @@ def realestate_molit(keywords_list):
             href = 'http://www.molit.go.kr/USR/NEWS/m_71/%s' % tr.a['href']
             print(tr.a.text.strip())
             print(href)
+            keywords = get_news_article_info(href)
+            keywords_list.extend(keywords)
 
 
 def realestate_gyunghyang(keywords_list):
@@ -496,6 +497,7 @@ def realestate_daum(keywords_list):
 
 
 def realestate_thebell(keywords_list):
+    driver = webdriver.Chrome(chromedriver_path)
     base_url = 'https://www.thebell.co.kr/free/content'
     cnt = 0
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
@@ -514,6 +516,7 @@ def realestate_thebell(keywords_list):
                 if article_date is None:
                     continue
                 if not article_date.startswith(today):
+                    driver.quit()
                     return
                 dt = dl.find('dt')
                 title = dt.text
@@ -530,7 +533,10 @@ def realestate_thebell(keywords_list):
                 href = '%s/%s' % (base_url, dl.a['href'])
                 print(title)
                 print(href)
-
+                keywords = get_news_article_info(href)
+                keywords_list.extend(keywords)
+    driver.quit()
+    return
 
 def realestate_cak(keywords_list):
     r = request_and_get('http://www.cak.or.kr/board/boardList.do?boardId=news_builder&menuId=437#')
