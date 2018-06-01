@@ -58,6 +58,34 @@ def request_and_get(url):
         return False
 
 
+def realestate_molit(keywords_list):
+    cnt = 0
+    r = request_and_get('http://www.molit.go.kr/USR/NEWS/m_71/lst.jsp')
+    if r is None:
+        return
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 3:
+                    article_date = td.text
+                    break
+            try:
+                tr.a['href']
+            except TypeError:
+                continue
+
+            if not article_date.startswith(today):
+                continue
+            if cnt == 0:
+                print('\n📰 국토교통부 보도자료')
+            cnt += 1
+            href = 'http://www.molit.go.kr/USR/NEWS/m_71/%s' % tr.a['href']
+            print(tr.a.text.strip())
+            print(href)
+
+
 def realestate_gyunghyang(keywords_list):
     cnt = 0
     r = request_and_get('http://biz.khan.co.kr/khan_art_list.html?category=realty')
@@ -465,7 +493,7 @@ def realestate_daum(keywords_list):
 def realestate_cak(keywords_list):
     r = request_and_get('http://www.cak.or.kr/board/boardList.do?boardId=news_builder&menuId=437#')
     soup = BeautifulSoup(r.text, 'html.parser')
-    today = '%4d.%02d.%02d' % (now.year, now.month, now.day-2)
+    today = '%4d.%02d.%02d' % (now.year, now.month, now.day)
     for tbody in soup.find_all('tbody'):
         for tr in tbody.find_all('tr'):
             for idx, td in enumerate(tr.find_all('td')):
@@ -505,8 +533,9 @@ def main():
     print('(JP official)')
     print([today], '부동산 헤드라인 모음\n')
 
-    realestate_cnews(keywords_list)
-    realestate_sedaily(keywords_list)
+    realestate_molit(keywords_list)     # 국토교통부
+    realestate_cnews(keywords_list)     # 건설경제
+    realestate_sedaily(keywords_list)   # 서울경제
     realestate_chosun(keywords_list)
     realestate_hankyung(keywords_list)
     realestate_mbn(keywords_list)
@@ -516,7 +545,7 @@ def main():
     realestate_nocut(keywords_list)
     realestate_donga(keywords_list)
     realestate_moonhwa(keywords_list)
-    realestate_segye(keywords_list)
+    realestate_segye(keywords_list)      # 세계일보
     realestate_joins(keywords_list)
     realestate_hani(keywords_list)
 
