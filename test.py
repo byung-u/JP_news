@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from newspaper import Article
 from bs4 import BeautifulSoup
 from collections import Counter
+from itertools import count
 from random import choice
 from requests import get, codes
 from selenium import webdriver
@@ -21,6 +22,7 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
                 'Safari/536.5'), )
 now = datetime.now()
 chromedriver_path = os.environ.get('CHROMEDRIVER_PATH')
+driver = webdriver.Chrome(chromedriver_path)
 # now = datetime.now() - timedelta(days=1)
 
 
@@ -509,11 +511,104 @@ def realestate_cak(keywords_list):
                     print(href)
 
 
+def realestate_venchosun(keywords_list):
+    r = request_and_get('http://www.vanchosun.com/realestate/main/frame.php?main=newinfo')
+    soup = BeautifulSoup(r.text, 'html.parser')
+    #cf_padding > table > tbody > tr:nth-child(3) > td > table > tbody > tr > td:nth-child(1) > a > span
+    for idx, table in enumerate(soup.find_all('table')):
+        if idx != 6:
+            continue
+        for tr in table.find_all('tr'):
+            for idx2, td in enumerate(tr.find_all('td')):
+                if idx2 != 1:
+                    continue
+                print(idx2, td)
+
+
+def realestate_molit(keywords_list):
+    cnt = 0
+    r = request_and_get('http://www.molit.go.kr/USR/NEWS/m_71/lst.jsp')
+    if r is None:
+        return
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day-1)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 3:
+                    article_date = td.text
+                    break
+            try:
+                tr.a['href']
+            except TypeError:
+                continue
+
+            if not article_date.startswith(today):
+                continue
+            if cnt == 0:
+                print('\n📰 국토교통부 보도자료')
+            cnt += 1
+            href = 'http://www.molit.go.kr/USR/NEWS/m_71/%s' % tr.a['href']
+            print(tr.a.text.strip())
+            print(href)
+
+
+def realestate_thebell(keywords_list):
+    base_url = 'https://www.thebell.co.kr/free/content'
+    cnt = 0
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day-1)
+    for i in count(1):
+        driver.implicitly_wait(3)
+        url = 'https://www.thebell.co.kr/free/content/article.asp?page=%d&svccode=00' % i
+        driver.get(url)
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        for list_box in soup.find_all(match_soup_class(['listBox'])):
+            for dl in list_box.find_all('dl'):
+                for idx, dd in enumerate(dl.find_all('dd')):
+                    if idx == 1:
+                        article_date = dd.find('span', attrs={'class': 'date'}).text
+                        break
+                if article_date is None:
+                    continue
+                if not article_date.startswith(today):
+                    return
+                dt = dl.find('dt')
+                title = dt.text
+                if (title.find('부동산') == -1 and
+                    title.find('청약') == -1 and
+                    title.find('아파트') == -1 and
+                    title.find('재건축') == -1 and
+                    title.find('집값') == -1 and
+                    title.find('건축') == -1):
+                    # ignore not realestate title
+                    continue
+                if cnt == 0:
+                    print('\n📰 the bell')
+                cnt += 1
+                href = '%s/%s' % (base_url, dl.a['href'])
+                print(title)
+                print(href)
+
 def main():
     keywords_list = []
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+# 할거
+# 아시아 경제, http://www.asiae.co.kr/news/realty/
+# 건설타임즈, http://www.constimes.co.kr/news/articleList.html?sc_section_code=S1N3
 
-    realestate_cak(keywords_list)
+# 조지아, http://gakara.org/news/documents.html
+# 뉴질랜드, http://www.inztimes.com/category/property/property_news/
+# 벤쿠버 http://www.vanchosun.com/realestate/main/frame.php?main=newinfo
+# 토론토 http://www.canadabesthouse.com/pages/newsAll.php?listingType=business
+# 베트남 http://www.vinahanin.com/batdongsannews
+
+    realestate_thebell(keywords_list)
+    # realestate_molit(keywords_list)
+    # realestate_venchosun(keywords_list)
+    # realestate_cak(keywords_list)
     # realestate_sedaily(keywords_list)
     # realestate_cnews(keywords_list)
     # realestate_mbn(keywords_list)
@@ -531,6 +626,7 @@ def main():
 
     # realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
+    driver.quit()
 
 if __name__ == '__main__':
     main()
