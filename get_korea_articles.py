@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import newspaper
+import os
 import re
 
 from bs4 import BeautifulSoup
 from collections import Counter
 from datetime import datetime
 from newspaper import Article
+from itertools import count
 from random import choice
 from requests import get, codes
+from selenium import webdriver
 
 USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/20100101 Firefox/11.0',
                'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:22.0) Gecko/20100 101 Firefox/22.0',
@@ -16,6 +19,8 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
                 'Chrome/19.0.1084.46 Safari/536.5'),
                ('Mozilla/5.0 (Windows; Windows NT 6.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/  19.0.1084.46'
                 'Safari/536.5'), )
+chromedriver_path = os.environ.get('CHROMEDRIVER_PATH')
+driver = webdriver.Chrome(chromedriver_path)
 now = datetime.now()
 # now = datetime.now() - timedelta(days=1)
 
@@ -490,6 +495,43 @@ def realestate_daum(keywords_list):
         print(href)
 
 
+def realestate_thebell(keywords_list):
+    base_url = 'https://www.thebell.co.kr/free/content'
+    cnt = 0
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    for i in count(1):
+        driver.implicitly_wait(3)
+        url = 'https://www.thebell.co.kr/free/content/article.asp?page=%d&svccode=00' % i
+        driver.get(url)
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        for list_box in soup.find_all(match_soup_class(['listBox'])):
+            for dl in list_box.find_all('dl'):
+                for idx, dd in enumerate(dl.find_all('dd')):
+                    if idx == 1:
+                        article_date = dd.find('span', attrs={'class': 'date'}).text
+                        break
+                if article_date is None:
+                    continue
+                if not article_date.startswith(today):
+                    return
+                dt = dl.find('dt')
+                title = dt.text
+                if ( title.find('부동산') == -1 and
+                     title.find('청약') == -1 and
+                     title.find('재건축') == -1 and
+                     title.find('집값') == -1 and
+                     title.find('아파트') == -1):
+                    # ignore not realestate title
+                    continue
+                if cnt == 0:
+                    print('\n📰 the bell')
+                cnt += 1
+                href = '%s/%s' % (base_url, dl.a['href'])
+                print(title)
+                print(href)
+
+
 def realestate_cak(keywords_list):
     r = request_and_get('http://www.cak.or.kr/board/boardList.do?boardId=news_builder&menuId=437#')
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -548,6 +590,7 @@ def main():
     realestate_segye(keywords_list)      # 세계일보
     realestate_joins(keywords_list)
     realestate_hani(keywords_list)
+    realestate_thebell(keywords_list)    # the bell (Gateway to capital market)
 
     realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
