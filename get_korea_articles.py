@@ -505,11 +505,11 @@ def main():
     print('(JP official)')
     print([today], '부동산 헤드라인 모음\n')
 
-    realestate_mbn(keywords_list)
     realestate_cnews(keywords_list)
     realestate_sedaily(keywords_list)
     realestate_chosun(keywords_list)
     realestate_hankyung(keywords_list)
+    realestate_mbn(keywords_list)
 
     realestate_gyunghyang(keywords_list)
     realestate_kookmin(keywords_list)
@@ -522,8 +522,7 @@ def main():
 
     realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
-
-    realestate_cak(keywords_list)
+    # realestate_cak(keywords_list)
 
     keywords = get_keywords(keywords_list)
     counter = Counter(keywords)
