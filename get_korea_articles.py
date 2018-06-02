@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import datetime
 import newspaper
 import os
 import re
@@ -598,7 +599,9 @@ def main():
     realestate_hani(keywords_list)
     realestate_thebell(keywords_list)    # the bell (Gateway to capital market)
 
-    realestate_naver(keywords_list)
+    weekday = datetime.today().weekday()
+    if weekday != 5 and weekday != 6:
+        realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
     # realestate_cak(keywords_list)
 
