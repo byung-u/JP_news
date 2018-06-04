@@ -173,6 +173,7 @@ def realestate_nocut(keywords_list):
             continue
         if cnt == 0:
             print('\n📰 노컷뉴스')
+        cnt += 1
         print(title)
         print(href)
         keywords = get_news_article_info(href)
