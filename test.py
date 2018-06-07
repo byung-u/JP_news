@@ -531,7 +531,6 @@ def realestate_molit(keywords_list):
     if r is None:
         return
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
-    today = '%4d-%02d-%02d' % (now.year, now.month, now.day-1)
     soup = BeautifulSoup(r.text, 'html.parser')
     for tbody in soup.find_all('tbody'):
         for tr in tbody.find_all('tr'):
@@ -554,11 +553,24 @@ def realestate_molit(keywords_list):
             print(href)
 
 def realestate_yonhapnews(keywords_list):
+    cnt = 0
     r = request_and_get('http://www.yonhapnews.co.kr/economy/0304000001.html')
     if r is None:
         return
+    today = '%4d/%02d/%02d' % (now.year, now.month, now.day)
+
     soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
-    print(soup)
+    for sect02 in soup.find_all(match_soup_class(['section02'])):
+        for div in sect02.find_all('div'):
+            print(div.a.text)
+            urls = div.a['href'].split('/')
+            print(div.a['href'])
+            article_date = '/'.join(urls[4:7])
+            if not article_date.startswith(today):
+                continue
+            if cnt == 0:
+                print('\n📰 연합뉴스')
+            cnt += 1
 
 def realestate_thebell(keywords_list):
     base_url = 'https://www.thebell.co.kr/free/content'

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import datetime
+# import datetime
 import newspaper
 import os
 import re
@@ -226,6 +226,29 @@ def realestate_mbn(keywords_list):
                 print('\n📰 매일경제')
             print(title)
             print(href)
+            cnt += 1
+            keywords = get_news_article_info(href)
+            keywords_list.extend(keywords)
+
+
+def realestate_yonhapnews(keywords_list):
+    cnt = 0
+    r = request_and_get('http://www.yonhapnews.co.kr/economy/0304000001.html')
+    if r is None:
+        return
+    today = '%4d/%02d/%02d' % (now.year, now.month, now.day)
+
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    for sect02 in soup.find_all(match_soup_class(['section02'])):
+        for div in sect02.find_all('div'):
+            print(div.a.text)
+            href = div.a['href']
+            urls = div.a['href'].split('/')
+            article_date = '/'.join(urls[4:7])
+            if not article_date.startswith(today):
+                continue
+            if cnt == 0:
+                print('\n📰 연합뉴스')
             cnt += 1
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
@@ -540,6 +563,7 @@ def realestate_thebell(keywords_list):
     driver.quit()
     return
 
+
 def realestate_cak(keywords_list):
     r = request_and_get('http://www.cak.or.kr/board/boardList.do?boardId=news_builder&menuId=437#')
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -584,6 +608,7 @@ def main():
     print([today], '부동산 헤드라인 모음\n')
 
     realestate_molit(keywords_list)     # 국토교통부
+    realestate_yonhapnews(keywords_list)    # 연합뉴스
     realestate_cnews(keywords_list)     # 건설경제
     realestate_sedaily(keywords_list)   # 서울경제
     realestate_chosun(keywords_list)
