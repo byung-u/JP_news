@@ -241,7 +241,6 @@ def realestate_yonhapnews(keywords_list):
     soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
     for sect02 in soup.find_all(match_soup_class(['section02'])):
         for div in sect02.find_all('div'):
-            print(div.a.text)
             href = div.a['href']
             urls = div.a['href'].split('/')
             article_date = '/'.join(urls[4:7])
@@ -250,6 +249,8 @@ def realestate_yonhapnews(keywords_list):
             if cnt == 0:
                 print('\n📰 연합뉴스')
             cnt += 1
+            print(div.a.text)
+            print(href)
             keywords = get_news_article_info(href)
             keywords_list.extend(keywords)
 
