@@ -553,6 +553,12 @@ def realestate_molit(keywords_list):
             print(tr.a.text.strip())
             print(href)
 
+def realestate_yonhapnews(keywords_list):
+    r = request_and_get('http://www.yonhapnews.co.kr/economy/0304000001.html')
+    if r is None:
+        return
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    print(soup)
 
 def realestate_thebell(keywords_list):
     base_url = 'https://www.thebell.co.kr/free/content'
@@ -605,7 +611,8 @@ def main():
 # 토론토 http://www.canadabesthouse.com/pages/newsAll.php?listingType=business
 # 베트남 http://www.vinahanin.com/batdongsannews
 
-    realestate_thebell(keywords_list)
+    realestate_yonhapnews(keywords_list)
+    # realestate_thebell(keywords_list)
     # realestate_molit(keywords_list)
     # realestate_venchosun(keywords_list)
     # realestate_cak(keywords_list)
