@@ -7,6 +7,7 @@ import re
 from bs4 import BeautifulSoup
 from collections import Counter
 from datetime import datetime
+# from datetime import datetime, timedelta
 from newspaper import Article
 from itertools import count
 from random import choice
@@ -364,39 +365,41 @@ def realestate_segye(keywords_list):
 
 def realestate_joins(keywords_list):
     cnt = 0
-    r = request_and_get('http://realestate.joins.com/?cloc=joongang|section|subsection')
+    r = request_and_get('http://realestate.joins.com/article/')
     if r is None:
         return
     today = '%4d.%02d.%02d' % (now.year, now.month, now.day)
 
-    base_url = 'http://news.joins.com'
+    base_url = 'http://realestate.joins.com'
     soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
-    for f in soup.find_all(match_soup_class(['bd'])):
-        for li in f.find_all('li'):
-            try:
-                title = li.a['title']
-            except KeyError:
-                title = check_valid_string(' '.join(li.text.strip().split()[1:-2]))
-            try:
-                href = '%s%s' % (base_url, li.a['href'])
-            except TypeError:
-                continue
-            temp = li.find('span', attrs={'class': 'date'})
-            try:
-                article_date = temp.text
-            except AttributeError:
-                continue
-
-            if not article_date.startswith(today):
-                continue
-            if cnt == 0:
-                print('\n📰 중앙일보')
-            cnt += 1
-            print(title)
-            print(href)
-            # 중앙일보 not working
-            # keywords = get_news_article_info(href)
-            # keywords_list.extend(keywords)
+    for list_basic in soup.find_all(match_soup_class(['list_basic'])):
+        for ul in list_basic.find_all('ul'):
+            for li in ul.find_all('li'):
+                title = li.find('span', attrs={'class': 'thumb'})
+                try:
+                    temp_date = li.find('span', attrs={'class': 'byline'})
+                    temp_date = temp_date.find_all('em')
+                    article_date = temp_date[1].text.split()[0]
+                    if article_date != today:
+                        continue
+                except AttributeError:
+                    continue
+                try:
+                    title = title.img['alt']
+                except AttributeError:
+                    continue
+                try:
+                    temp = li.a['href']
+                except KeyError:
+                    continue
+                href = '%s%s' % (base_url, temp)
+                if cnt == 0:
+                    print('\n📰 중앙일보')
+                cnt += 1
+                print(title)
+                print(href)
+                keywords = get_news_article_info(href)
+                keywords_list.extend(keywords)
 
 
 def realestate_chosun(keywords_list):
