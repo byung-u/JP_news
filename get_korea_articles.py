@@ -229,7 +229,10 @@ def realestate_mbn(keywords_list):
             print(href)
             cnt += 1
             keywords = get_news_article_info(href)
-            keywords_list.extend(keywords)
+            try:
+                keywords_list.extend(keywords)
+            except TypeError:
+                continue
 
 
 def realestate_yonhapnews(keywords_list):
