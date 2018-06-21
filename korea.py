@@ -10,15 +10,40 @@ from datetime import datetime
 # from define import d_code
 
 
+def jp_sqlite3_init():
+    if (os.path.isfile('./korea_jp.db')):                                             
+        return                                                                     
+                                                                                   
+    conn = sqlite3.connect('korea_jp.db')                                             
+    c = conn.cursor()                                                              
+# 종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+    c.execute('''CREATE TABLE IF NOT EXISTS realestate
+                 (code text PRIMARY KEY, destrict text, loc text)''')              
+    conn.commit()                                                                  
+                                                                                   
+    f = open('../loc_code.txt')                                                    
+    for d in f.readlines():                                                        
+        data = d.split()                                                           
+        c.execute('''INSERT OR REPLACE INTO localcode VALUES                       
+                     ("%s", "%s", "%s")''' % (data[0], data[1], data[2]))          
+                                                                                   
+    conn.commit()                                                                  
+                                                                                   
+    f.close()                                                                      
+    conn.close()                                                                   
+    return                                                                         
+                  
+
+
 def realstate_trade():
     d_code = {
+          '11110': '종로구',
+          '11140': '중구',
+          '11170': '용산구',
+          '11200': '성동구',
+          '11215': '광진구',
           }
 
-     #     '11110': '종로구',
-     #     '11140': '중구',
-     #     '11170': '용산구',
-     #     '11200': '성동구',
-     #     '11215': '광진구',
      #     '11230': '동대문구',
      #     '11260': '중랑구',
      #     '11290': '성북구',
@@ -284,6 +309,7 @@ def realstate_trade():
                 request_url = '%s?LAWD_CD=%s&DEAL_YMD=%s&serviceKey=%s' % (
                               apt_trade_url, district_code, time_str, data_svc_key)
                 request_realstate_trade(request_url, district)
+                return
 
 
 def request_realstate_trade(request_url, district):
@@ -330,20 +356,9 @@ def request_realstate_trade(request_url, district):
 #                          infos[3], infos[6], infos[7])
 #            print(ret_msg)
 
-
+'''
+종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+'''
 if __name__ == '__main__':
+    jp_sqlite3_init()
     realstate_trade()
-'''
-         ['',
-        1 '    83,000',
-        2'2005'
-        3, '2018'
-        4, ' 상암동'
-        5, '상암월드컵파크6단지'
-        6, '1'
-        7, '11~20'
-        8, '104.32'
-        9, '1689'
-        10 , '11440'
-        11 , '6']
-'''
