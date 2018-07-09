@@ -336,8 +336,8 @@ def realestate_moonhwa(keywords_list):
         if cnt == 0:
             print('\n📰 문화일보')
         cnt += 1
-        print(' '.join(articles[:-1]))
         print(td.a['href'])
+        print(' '.join(articles[:-1]))
         keywords = get_news_article_info(td.a['href'])
         keywords_list.extend(keywords)
 
