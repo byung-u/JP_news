@@ -124,6 +124,19 @@ def realestate_kb_bunyang():
     print('\n'.join(result))
     return
 
+
+def realestate_dapt_bunyang():
+    url = 'http://www.drapt.com/e_sale/index.htm?page_name=cal&menu_key=0'
+    r = request_and_get(url)
+    if r is None:
+        return
+    print('🌇  닥터아파트 분양캘린더\n', url, '\n\n')
+    soup = BeautifulSoup(r.content.decode('euc-kr', 'replace'), 'html.parser')
+    for esale_cal_topbox in soup.find_all(match_soup_class(['esale_cal_topbox'])):
+        for li in esale_cal_topbox.find_all('li'):
+            print(li.text)
+
+
 def realestate_gyunghyang(keywords_list):
     cnt = 0
     r = request_and_get('http://biz.khan.co.kr/khan_art_list.html?category=realty')
@@ -582,11 +595,11 @@ def realestate_thebell(keywords_list):
                     return
                 dt = dl.find('dt')
                 title = dt.text
-                if ( title.find('부동산') == -1 and
-                     title.find('청약') == -1 and
-                     title.find('재건축') == -1 and
-                     title.find('집값') == -1 and
-                     title.find('아파트') == -1):
+                if (title.find('부동산') == -1 and
+                   title.find('청약') == -1 and
+                   title.find('재건축') == -1 and
+                   title.find('집값') == -1 and
+                   title.find('아파트') == -1):
                     # ignore not realestate title
                     continue
                 if cnt == 0:
@@ -645,6 +658,7 @@ def main():
     print([today], '부동산 관련 모음\n')
 
     realestate_kb_bunyang()                 # KB 분양
+    realestate_dapt_bunyang()               # 닥터아파트 분양
     realestate_molit(keywords_list)         # 국토교통부
     realestate_yonhapnews(keywords_list)    # 연합뉴스
     realestate_cnews(keywords_list)     # 건설경제
