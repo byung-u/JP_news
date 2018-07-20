@@ -94,6 +94,36 @@ def realestate_molit(keywords_list):
             keywords_list.extend(keywords)
 
 
+def realestate_kb_bunyang():
+    reserve, result = [], []
+    url = 'http://nland.kbstar.com/quics?page=B046971'
+    r = request_and_get(url)
+    if r is None:
+        return
+    today = 'd%4d%02d%02d' % (now.year, now.month, now.day)
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    for cal_daily in soup.find_all(match_soup_class(['cal_daily'])):
+        for dl in cal_daily.find_all('dl'):
+            if dl['id'] != today:
+                continue
+            for dd in dl.find_all('dd'):
+                for li in dd.find_all('li'):
+                    ret = li.find('span', attrs={'class': 'red'})
+                    if ret is None:
+                        ret = li.find('span', attrs={'class': 'dblue'})
+                        if ret is None:
+                            continue
+                        msg = '- %s' % (li.text.strip()[3:])
+                        result.append(msg)
+                    else:
+                        msg = '- %s' % (li.text.strip()[2:])
+                        reserve.append(msg)
+    print('🌇  KB 분양캘린더\n', url, '\n\n[접수]')
+    print('\n'.join(reserve))
+    print('[발표]')
+    print('\n'.join(result))
+    return
+
 def realestate_gyunghyang(keywords_list):
     cnt = 0
     r = request_and_get('http://biz.khan.co.kr/khan_art_list.html?category=realty')
@@ -611,10 +641,11 @@ def get_keywords(keywords_list):
 def main():
     keywords_list = []
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
-    print('(JP official)')
-    print([today], '부동산 헤드라인 모음\n')
+    print('(JP official) PC 전용')
+    print([today], '부동산 관련 모음\n')
 
-    realestate_molit(keywords_list)     # 국토교통부
+    realestate_kb_bunyang()                 # KB 분양
+    realestate_molit(keywords_list)         # 국토교통부
     realestate_yonhapnews(keywords_list)    # 연합뉴스
     realestate_cnews(keywords_list)     # 건설경제
     realestate_sedaily(keywords_list)   # 서울경제
