@@ -556,6 +556,7 @@ def realestate_thebell(keywords_list):
                    title.find('청약') == -1 and
                    title.find('재건축') == -1 and
                    title.find('집값') == -1 and
+                   title.find('신한알파리츠') == -1 and
                    title.find('아파트') == -1):
                     # ignore not realestate title
                     continue
@@ -568,6 +569,37 @@ def realestate_thebell(keywords_list):
                 keywords = get_news_article_info(href)
                 keywords_list.extend(keywords)
     driver.quit()
+    return
+
+
+def realestate_thescoop(keywords_list):
+    cnt = 0
+    driver = webdriver.Chrome(chromedriver_path)
+    base_url = 'http://www.thescoop.co.kr'
+    url = 'http://www.thescoop.co.kr/news/articleList.html?page=1&total=221&sc_section_code=&sc_sub_section_code=S2N74&sc_serial_code=&sc_area=&sc_level=&sc_article_type=&sc_view_level=&sc_sdate=&sc_edate=&sc_serial_number=&sc_word=&view_type=sm'
+    driver.implicitly_wait(3)
+    driver.get(url)
+
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)  
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    for article_list in soup.find_all(match_soup_class(['article-list-content'])):
+        for blocks in article_list.find_all(match_soup_class(['list-block'])):
+            for dated in blocks.find_all(match_soup_class(['list-dated'])):
+                article_date = dated.text.split('|')[2].strip()
+                break  # found article date
+            if not article_date.startswith(today):
+                continue
+            for titles in blocks.find_all(match_soup_class(['list-titles'])):
+                if cnt == 0:
+                    print('\n📰 the scoop')
+                cnt += 1
+                href = '%s%s' % (base_url, titles.a['href'])
+                keywords = get_news_article_info(href)
+                keywords_list.extend(keywords)
+                print(titles.a.text)
+                print(href)
+    driver.quit()        
     return
 
 
@@ -631,6 +663,7 @@ def main():
     realestate_joins(keywords_list)
     realestate_hani(keywords_list)
     realestate_thebell(keywords_list)    # the bell (Gateway to capital market)
+    realestate_thescoop(keywords_list)   # the scoop (Special Secret Smart)
 
     weekday = datetime.today().weekday()
     if weekday != 5 and weekday != 6:
