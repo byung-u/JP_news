@@ -23,7 +23,7 @@ USER_AGENTS = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.7; rv:11.0) Gecko/2010
 now = datetime.now()
 chromedriver_path = os.environ.get('CHROMEDRIVER_PATH')
 driver = webdriver.Chrome(chromedriver_path)
-# now = datetime.now() - timedelta(days=1)
+now_4 = datetime.now() - timedelta(days=4)
 
 
 def get_news_article_info(url):
@@ -438,7 +438,6 @@ def realestate_cnews(keywords_list):
 
 
 def test(keywords_list):
-    driver = webdriver.Chrome(chromedriver_path)
     driver.implicitly_wait(3)
     driver.get('http://www.cnews.co.kr/')
 
@@ -610,6 +609,201 @@ def realestate_thebell(keywords_list):
                 print(title)
                 print(href)
 
+
+def realestate_kb_bun(keywords_list):  #
+    reserve, result = [], []
+    url = 'http://nland.kbstar.com/quics?page=B046971'
+    r = request_and_get(url)
+    if r is None:
+        return
+    today = 'd%4d%02d%02d' % (now.year, now.month, now.day)
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    for cal_daily in soup.find_all(match_soup_class(['cal_daily'])):
+        for dl in cal_daily.find_all('dl'):
+            if dl['id'] != today:
+                continue
+            for dd in dl.find_all('dd'):
+                for li in dd.find_all('li'):
+                    ret = li.find('span', attrs={'class': 'red'})
+                    if ret is None:
+                        ret = li.find('span', attrs={'class': 'dblue'})
+                        if ret is None:
+                            continue
+                        msg = '- %s' % (li.text.strip()[3:])
+                        result.append(msg)
+                    else:
+                        msg = '- %s' % (li.text.strip()[2:])
+                        reserve.append(msg)
+    print('🌇  KB 분양캘린더\n', url, '\n\n[접수]')
+    print('\n'.join(reserve))
+    print('[발표]')
+    print('\n'.join(result))
+    return
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            category, title, url = None, None, None
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 1:
+                    title = td.a.text
+                    url = '%s%s' % (base_url, td.a['href'])
+                elif idx == 3:
+                    article_date = td.text.strip()
+                    # if article_date != today:
+                    #     break
+                elif idx == 4:
+                    category = td.text
+                    print(category, title, url)
+    # print(soup)
+
+
+def realestate_kb(keywords_list):  # 공매물건
+    base_url = 'https://kbret.co.kr'
+    cnt = 0
+    r = request_and_get('https://kbret.co.kr/sale/publicsale.do')
+    if r is None:
+        return
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            category, title, url = None, None, None
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 1:
+                    title = td.a.text
+                    url = '%s%s' % (base_url, td.a['href'])
+                elif idx == 3:
+                    article_date = td.text.strip()
+                    # if article_date != today:
+                    #     break
+                elif idx == 4:
+                    category = td.text
+                    print(category, title, url)
+    # print(soup)
+
+
+def realestate_kb_test(keywords_list):
+    cnt = 0
+    r = request_and_get('http://nland.kbstar.com/quics?page=B047003')
+    if r is None:
+        return
+    today = '%4d.%02d.%02d' % (now.year, now.month, now.day)
+
+    soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    print(soup)
+    return
+    for tbody in soup.find_all('tbody'):
+        for tr in tbody.find_all('tr'):
+            category, title, onclick = None, None, None
+            for idx, td in enumerate(tr.find_all('td')):
+                if idx == 1:
+                    category = td.text
+                elif idx == 2:
+                    title = td.text
+                    try:
+                        url = td.a['onclick']
+                        print(url)
+                        # onclick = tr.find('td', {'a': 'href'}).get('onclick')
+                        # print('-->', onclick)
+                    except AttributeError:
+                        continue
+                elif idx == 4:
+                    if td.text != today:
+                        break
+                    else:
+                        print(category, title)
+
+def realestate_doc_bun():
+    reserve, result = [], []
+    url = 'http://www.drapt.com/e_sale/index.htm?page_name=cal&menu_key=0'
+    r = request_and_get(url)
+    if r is None:
+        return
+    today = 'd%4d%02d%02d' % (now.year, now.month, now.day)
+    soup = BeautifulSoup(r.content.decode('euc-kr', 'replace'), 'html.parser')
+    for esale_cal_topbox in soup.find_all(match_soup_class(['esale_cal_topbox'])):
+        for idx, li in enumerate(esale_cal_topbox.find_all('li')):
+            ret = li.find('li', attrs={'class': 'section'})
+            print(li.text)
+            # ret = li.find('section')
+            # print(ret)
+    return
+#        for dl in cal_daily.find_all('dl'):
+#            if dl['id'] != today:
+#                continue
+#            for dd in dl.find_all('dd'):
+#                for li in dd.find_all('li'):
+#                    ret = li.find('span', attrs={'class': 'red'})
+#                    if ret is None:
+#                        ret = li.find('span', attrs={'class': 'dblue'})
+#                        if ret is None:
+#                            continue
+#                        msg = '- %s' % (li.text.strip()[3:])
+#                        result.append(msg)
+#                    else:
+#                        msg = '- %s' % (li.text.strip()[2:])
+#                        reserve.append(msg)
+#    print('🌇  KB 분양캘린더\n', url, '\n\n[접수]')
+#    print('\n'.join(reserve))
+#    print('[발표]')
+#    print('\n'.join(result))
+    return
+
+def realestate_scoop():
+    base_url = 'http://www.thescoop.co.kr'
+    url = 'http://www.thescoop.co.kr/news/articleList.html?page=1&total=221&sc_section_code=&sc_sub_section_code=S2N74&sc_serial_code=&sc_area=&sc_level=&sc_article_type=&sc_view_level=&sc_sdate=&sc_edate=&sc_serial_number=&sc_word=&view_type=sm'
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)  
+    today = '%4d-%02d-%02d' % (now_4.year, now_4.month, now_4.day)  
+
+    driver.implicitly_wait(3)
+    driver.get(url)
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    # soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+    for article_list in soup.find_all(match_soup_class(['article-list-content'])):
+        for blocks in article_list.find_all(match_soup_class(['list-block'])):
+            for dated in blocks.find_all(match_soup_class(['list-dated'])):
+                article_date = dated.text.split('|')[2].strip()
+                break
+            if not article_date.startswith(today):
+                continue
+            for titles in blocks.find_all(match_soup_class(['list-titles'])):
+                href = '%s%s' % (base_url, titles.a['href'])
+                # print(titles)
+                print(titles.a.text)
+                print(href)
+    driver.quit()        
+
+
+def economy_scoop():
+    base_url = 'http://www.thescoop.co.kr'
+    urls = ['S1N7', 'S2N10', 'S2N29', 'S2N30', 'S2N52', 'S2N59', 'S2N69',
+            'S2N78', 'S2N70', 'S2N72', 'S2N75', 'S2N76', 'S2N77',
+            'S2N98', 'S2N99', 'S2N101', 'S2N110', ]
+    today = '%4d-%02d-%02d' % (now.year, now.month, now.day)  
+    for u in urls:
+        url = 'http://www.thescoop.co.kr/news/articleList.html?page=1&total=221&sc_section_code=&sc_sub_section_code=%s&sc_serial_code=&sc_area=&sc_level=&sc_article_type=&sc_view_level=&sc_sdate=&sc_edate=&sc_serial_number=&sc_word=&view_type=sm' % u
+    # today = '%4d-%02d-%02d' % (now_4.year, now_4.month, now_4.day)  
+
+        driver.implicitly_wait(3)
+        driver.get(url)
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        # soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+        for article_list in soup.find_all(match_soup_class(['article-list-content'])):
+            for blocks in article_list.find_all(match_soup_class(['list-block'])):
+                for dated in blocks.find_all(match_soup_class(['list-dated'])):
+                    article_date = dated.text.split('|')[2].strip()
+                    break
+                if not article_date.startswith(today):
+                    continue
+                for titles in blocks.find_all(match_soup_class(['list-titles'])):
+                    href = '%s%s' % (base_url, titles.a['href'])
+                    # print(titles)
+                    print(titles.a.text)
+                    print(href)
+    driver.quit()        
+
+
 def main():
     keywords_list = []
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
@@ -623,7 +817,12 @@ def main():
 # 토론토 http://www.canadabesthouse.com/pages/newsAll.php?listingType=business
 # 베트남 http://www.vinahanin.com/batdongsannews
 
-    realestate_yonhapnews(keywords_list)
+    # realestate_kb_bun(keywords_list)
+    # realestate_doc_bun()
+    # realestate_scoop()
+    economy_scoop()
+    # realestate_kb(keywords_list)
+    # realestate_yonhapnews(keywords_list)
     # realestate_thebell(keywords_list)
     # realestate_molit(keywords_list)
     # realestate_venchosun(keywords_list)
@@ -645,7 +844,7 @@ def main():
 
     # realestate_naver(keywords_list)
     # realestate_daum(keywords_list)
-    driver.quit()
+    # driver.quit()
 
 if __name__ == '__main__':
     main()
