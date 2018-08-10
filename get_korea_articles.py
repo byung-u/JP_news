@@ -643,7 +643,7 @@ def get_keywords(keywords_list):
 def main():
     keywords_list = []
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
-    print('(JP official) PC 전용')
+    print('(JP) PC 전용')
     print([today], '부동산 기사 모음\n')
 
     realestate_molit(keywords_list)         # 국토교통부
