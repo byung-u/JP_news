@@ -7,7 +7,7 @@ import sqlite3
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-# from define import d_code
+from loc_code import LOC_CODE
 
 
 def jp_sqlite3_init(conn, cursor):
@@ -21,66 +21,28 @@ def jp_sqlite3_insert(conn, c, query):
     conn.commit()
 
 
+def jp_sqlite3_select(conn, c, query):
+    c.execute(query)
+    res = c.fetchone()
+    if res is None:
+        return False
+    return True
+
 # 10년치는 max 8개 (6월부터니까 다 하고나서 6월부터 다시 받도록)
-def realstate_trade(conn, cursor):
+# 파주시 아동동 실패남
+
+
+def realstate_trade_10year(conn, cursor):
     d_code = {
-    #      '41461': '용인처인구',
-    #      '41463': '용인기흥구',
-    #      '41465': '용인수지구',
-    #      '41480': '파주시',
-    #      '41500': '이천시',
-    #      '41550': '안성시',
-    #      '41570': '김포시',
-    #      '41590': '화성시',
+          '41150': '의정부시',
+          '41171': '안양만안구',
+          '41173': '안양동안구',
+          '41195': '부천원미구',
+          '41197': '부천소사구',
+          '41199': '부천오정구',
+          '43111': '청주상당구',
+          '43112': '청주서원구',
           }
-    #      '41610': '광주시',
-    #      '41630': '양주시',
-    #      '41650': '포천시',
-    #      '41670': '여주시',
-    #      '41800': '연천군',
-    #      '41820': '가평군',
-    #      '41830': '양평군',
-    #      '42110': '춘천시',
-    #      '42130': '원주시',
-    #      '42150': '강릉시',
-    #      '42170': '동해시',
-    #      '42190': '태백시',
-    #      '42210': '속초시',
-    #      '42230': '삼척시',
-    #      '42720': '홍천군',
-    #      '42730': '횡성군',
-    #      '42750': '영월군',
-    #      '42760': '평창군',
-    #      '42770': '정선군',
-    #      '42780': '철원군',
-    #      '42790': '화천군',
-    #      '42800': '양구군',
-    #      '50110': '제주시',
-    #      '50130': '서귀포시',
-    #      '42810': '인제군',
-    #      '42820': '고성군',
-    #      '42830': '양양군',
-    #      '26230': '부산진구',
-    #      '26260': '동래구',
-    #      '26290': '남구',
-    #      '26320': '북구',
-    #      '26350': '해운대구',
-    #      '26380': '사하구',
-    #      '26410': '금정구',
-    #      '26440': '강서구',
-    #      '26470': '연제구',
-    #      '26500': '수영구',
-    #      '26530': '사상구',
-    #      '26710': '기장군',
-    #      '27110': '중구',
-    #      '27140': '동구',
-    #      '27170': '서구',
-    #      '27200': '남구',
-    #      '27230': '북구',
-    #      '27260': '수성구',
-    #      '27290': '달서구',
-    #      '27710': '달성군',
-    #      '28110': '중구',
     #      '28140': '동구',
     #      '28170': '남구',
     #      '28185': '연수구',
@@ -105,22 +67,6 @@ def realstate_trade(conn, cursor):
     #      '31170': '동구',
     #      '31200': '북구',
     #      '31710': '울주군',
-    #      '36110': '세종특별자치시',
-    #      '41111': '수원장안구',
-    #      '41113': '수원권선구',
-    #      '41115': '수원팔달구',
-    #      '41117': '수원영통구',
-    #      '41131': '성남수정구',
-    #      '41133': '성남중원구',
-    #      '41135': '성남분당구',
-    #      '41150': '의정부시',
-    #      '41171': '안양만안구',
-    #      '41173': '안양동안구',
-    #      '41195': '부천원미구',
-    #      '41197': '부천소사구',
-    #      '41199': '부천오정구',
-    #      '43111': '청주상당구',
-    #      '43112': '청주서원구',
     #      '43113': '청주흥덕구',
     #      '43114': '청주청원구',
     #      '43130': '충주시',
@@ -252,6 +198,18 @@ def realstate_trade(conn, cursor):
                 request_realstate_trade(request_url, district, conn, cursor)
 
 
+def is_exist_trade(district, dong, apt_name,
+                   apt_built_year, apt_size, apt_floor,
+                   trade_date, trade_price):
+    query = '''SELECT * FROM realestate WHERE \
+               district="%s" AND dong="%s" AND apt_name="%s" AND \
+               apt_built_year="%s" AND apt_size="%s" AND apt_floor="%s" AND \
+               trade_date="%s" AND trade_price="%s"
+    ''' % (district, dong, apt_name, apt_built_year, apt_size, apt_floor,
+           trade_date, trade_price)
+    return jp_sqlite3_select(conn, cursor, query)
+
+
 def request_realstate_trade(request_url, district, conn, cursor):
     req = urllib.request.Request(request_url)
     try:
@@ -298,6 +256,13 @@ def request_realstate_trade(request_url, district, conn, cursor):
             elif idx == 10:
                 apt_floor = info
         trade_date = '%s-%02d-%s' % (apt_trade_year, int(apt_trade_month), apt_trade_day)
+        if is_exist_trade(district, dong, apt_name,
+                          apt_built_year, apt_size, apt_floor,
+                          trade_date, trade_price) is True:
+            continue
+        msg = "%s %s %s, %s/%s층 %s" % (
+              district, dong, apt_name, apt_size, apt_floor, trade_price)
+        print(msg)
         query = '''INSERT OR REPLACE INTO realestate VALUES
                    ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")''' % (
                 district, dong, apt_name,
@@ -305,6 +270,18 @@ def request_realstate_trade(request_url, district, conn, cursor):
                 trade_date, trade_price)
         jp_sqlite3_insert(conn, cursor, query)
     return
+
+
+def realstate_trade(conn, cursor):
+    now = datetime.now()
+    time_str = '%4d%02d' % (now.year, now.month)
+    apt_trade_url = os.environ.get('DATA_APT_TRADE_URL')
+    data_svc_key = os.environ.get('DATA_APT_API_KEY')
+
+    for district_code, district in LOC_CODE.items():
+        request_url = '%s?LAWD_CD=%s&DEAL_YMD=%s&serviceKey=%s' % (
+                      apt_trade_url, district_code, time_str, data_svc_key)
+        request_realstate_trade(request_url, district, conn, cursor)
 
 
 '''
