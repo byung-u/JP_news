@@ -78,12 +78,23 @@ def realestate_dapt_bunyang():
     soup = BeautifulSoup(r.content.decode('euc-kr', 'replace'), 'html.parser')
     for esale_cal_topbox in soup.find_all(match_soup_class(['esale_cal_topbox'])):
         for li in esale_cal_topbox.find_all('li'):
-            print(li.text)
+            if li.text == '당첨자발표':
+                print('➡️ 당첨자발표')
+            elif li.text == '당첨자계약':
+                print('➡️ 당첨자계약')
+            elif li.text == '입주자 모집공고':
+                print('➡️ 입주자 모집공고')
+            elif li.text == '청약접수':
+                print('➡️ 청약접수')
+            elif li.text == '모델하우스 오픈':
+                print('➡️ 모델하우스 오픈')
+            else:
+                print(li.text)
 
 
 def main():
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
-    print('(JP official) PC 전용')
+    print('(JP)')
     print([today], '부동산 분양 캘린더 모음\n')
 
     realestate_kb_bunyang()                 # KB 분양
