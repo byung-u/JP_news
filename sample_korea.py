@@ -139,9 +139,6 @@ def request_realstate_rent(request_url, district, conn, cursor):
             infos = re.split('<.*?>', item.text)
         except TypeError:
             continue
-        print(infos)
-        import sys
-        sys.exit(1)
         try:
             apt_size = float(infos[8])
         except ValueError:
@@ -167,6 +164,8 @@ def request_realstate_rent(request_url, district, conn, cursor):
                 apt_size = info
             elif idx == 10:
                 apt_floor = info
+# ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+# ['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
         # trade_date = '%s-%02d-%s' % (apt_trade_year, int(apt_trade_month), apt_trade_day)
         if is_exist_trade(district, dong, apt_name,
                           apt_built_year, apt_size, apt_floor, apt_trade_year,
@@ -226,6 +225,7 @@ def get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor):
 '''
 Trade
 종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
 '''
 if __name__ == '__main__':
     conn = MySQLdb.connect(user='root', db="andre")
