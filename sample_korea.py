@@ -218,6 +218,61 @@ def get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor):
 
 
 def realstate_merge(conn, cursor):
+    cursor.execute('select * from realestate_rent')
+    row = cursor.fetchone()
+    querys = []
+    while row is not None:
+        query = ''' INSERT INTO realestate ( \
+                        district, dong, apt_name, apt_built_year, \
+                        apt_size, apt_floor, r_year, r_month,
+                        r_day, rent_price, monthly_price, addr_num) \
+                    VALUES ("%s", "%s", "%s", "%s", "%s", "%s",\
+                            "%s", "%s", "%s", "%s", "%s", "%s") \
+                    ON DUPLICATE KEY UPDATE \
+                        district="%s", dong="%s", apt_name="%s", apt_built_year="%s", \
+                        apt_size="%s", apt_floor="%s", r_year="%s", \
+                        r_month="%s", r_day="%s", \
+                        rent_price="%s", monthly_price="%s", \
+                        addr_num="%s" ''' % (
+                row[0], row[1], row[2], row[3], 
+                row[4], row[5], row[6], row[7], 
+                row[8], row[9], row[10], row[11], 
+                row[0], row[1], row[2], row[3], 
+                row[4], row[5], row[6], row[7], 
+                row[8], row[9], row[10], row[11])
+        querys.append(query)
+        row = cursor.fetchone()
+
+    for query in querys:
+        cursor.execute(query)
+    conn.commit()
+    return
+
+
+def realstate_merge2(conn, cursor):
+    ## 가장 중요한 부분인데 방법을 어찌 찾을까나
+    cursor.execute('select * from realestate_trade')
+    row = cursor.fetchone()
+    while row is not None:
+        # ('서울특별시 종로구', ' 사직동', '광화문풍림스페이스본(9-0)', '2008', '126.34',
+        # '14', '2018', '7', '11~20', '119000', '9')
+        querys = []
+        query = ''' UPDATE realestate SET trade_price="%s" \
+                    WHERE district="%s" AND dong="%s" AND apt_name="%s" AND \
+                    apt_built_year="%s" AND apt_size="%s" AND \
+                    apt_floor="%s" AND r_year="%s" AND r_month="%s" AND \
+                    r_day="%s" AND addr_num="%s" ''' % (
+                row[9],
+                row[0], row[1], row[2], row[3], row[4], 
+                row[5], row[6], row[7], row[8], row[10])
+        querys.append(query)
+        print(query)
+        return
+        row = cursor.fetchone()
+
+    for query in querys:
+        cursor.execute(query)
+    conn.commit()
     return
 '''
 Trade
@@ -232,13 +287,14 @@ if __name__ == '__main__':
     # realstate_trade(conn, cursor)
     #
     # merge db
-    rx = pd.ExcelWriter('/Users/andre.jeon/git/JP_news/realestate.xlsx')
-    df_mysql = pd.read_sql('select * from realestate_trade;', con=conn)
-    df_mysql.to_excel(rx, 'trade')
-    df_mysql = pd.read_sql('select * from realestate_rent;', con=conn)
-    df_mysql.to_excel(rx, 'rent')
-    rx.save()
+    # realstate_merge(conn, cursor)
+    realstate_merge2(conn, cursor)
 
-    realstate_merge(conn, cursor)
-
+    
+    # rx = pd.ExcelWriter('/Users/andre.jeon/git/JP_news/realestate.xlsx')
+    # df_mysql = pd.read_sql('select * from realestate_trade;', con=conn)
+    # df_mysql.to_excel(rx, 'trade')
+    # df_mysql = pd.read_sql('select * from realestate_rent;', con=conn)
+    # df_mysql.to_excel(rx, 'rent')
+    # rx.save()
     conn.close()
