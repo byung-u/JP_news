@@ -13,18 +13,18 @@ from loc_code import LOC_CODE
 
 # 10년치는 max 8개 (6월부터니까 다 하고나서 6월부터 다시 받도록)
 # 파주시 아동동 실패남
-def is_exist_trade(district, dong, apt_name,
-                   apt_built_year, apt_size, apt_floor, apt_trade_year,
-                   apt_trade_month, apt_trade_day, trade_price):
-    query = '''SELECT * FROM realestate_trade WHERE \
-               district="%s" AND dong="%s" AND apt_name="%s" AND \
-               apt_built_year="%s" AND apt_size="%s" AND apt_floor="%s" AND \
-               trade_year="%s" AND trade_month="%s" AND trade_day="%s" AND
-               trade_price="%s"
-    ''' % (district, dong, apt_name, apt_built_year, apt_size, apt_floor,
-           apt_trade_year, apt_trade_month, apt_trade_day, trade_price)
-    return False
-    # return jp_sqlite3_select(conn, cursor, query)
+# def is_exist_trade(district, dong, apt_name,
+#                   apt_built_year, apt_size, apt_floor, apt_trade_year,
+#                   apt_trade_month, apt_trade_day, trade_price):
+#    query = '''SELECT * FROM realestate_trade WHERE \
+#               district="%s" AND dong="%s" AND apt_name="%s" AND \
+#               apt_built_year="%s" AND apt_size="%s" AND apt_floor="%s" AND \
+#               trade_year="%s" AND trade_month="%s" AND trade_day="%s" AND
+#               trade_price="%s"
+#    ''' % (district, dong, apt_name, apt_built_year, apt_size, apt_floor,
+#           apt_trade_year, apt_trade_month, apt_trade_day, trade_price)
+#    return False
+# return jp_sqlite3_select(conn, cursor, query)
 
 
 def request_realstate_trade(request_url, district, conn, cursor):
@@ -75,10 +75,10 @@ def request_realstate_trade(request_url, district, conn, cursor):
             elif idx == 10:
                 apt_floor = info
         # trade_date = '%s-%02d-%s' % (apt_trade_year, int(apt_trade_month), apt_trade_day)
-        if is_exist_trade(district, dong, apt_name,
-                          apt_built_year, apt_size, apt_floor, apt_trade_year,
-                          apt_trade_month, apt_trade_day, trade_price) is True:
-            continue
+        # if is_exist_trade(district, dong, apt_name,
+        #                   apt_built_year, apt_size, apt_floor, apt_trade_year,
+        #                  apt_trade_month, apt_trade_day, trade_price) is True:
+        #    continue
         # msg = "%s %s %s, %s/%s층 %s" % (
         #       district, dong, apt_name, apt_size, apt_floor, trade_price)
         # print(msg)
@@ -190,7 +190,7 @@ def request_realstate_rent(request_url, district, conn, cursor):
     return
 
 
-def realstate_trade(conn, cursor):
+def realstate_info(conn, cursor):
     now = datetime.now()
     # time_str = '%4d%02d' % (now.year, now.month)
     time_str = '%4d06' % (now.year)
@@ -234,11 +234,11 @@ def realstate_merge(conn, cursor):
                         r_month="%s", r_day="%s", \
                         rent_price="%s", monthly_price="%s", \
                         addr_num="%s" ''' % (
-                row[0], row[1], row[2], row[3], 
-                row[4], row[5], row[6], row[7], 
-                row[8], row[9], row[10], row[11], 
-                row[0], row[1], row[2], row[3], 
-                row[4], row[5], row[6], row[7], 
+                row[0], row[1], row[2], row[3],
+                row[4], row[5], row[6], row[7],
+                row[8], row[9], row[10], row[11],
+                row[0], row[1], row[2], row[3],
+                row[4], row[5], row[6], row[7],
                 row[8], row[9], row[10], row[11])
         querys.append(query)
         row = cursor.fetchone()
@@ -250,51 +250,57 @@ def realstate_merge(conn, cursor):
 
 
 def realstate_merge2(conn, cursor):
-    ## 가장 중요한 부분인데 방법을 어찌 찾을까나
+    #  가장 중요한 부분인데 방법을 어찌 찾을까나
     cursor.execute('select * from realestate_trade')
     row = cursor.fetchone()
+    querys = []
     while row is not None:
-        # ('서울특별시 종로구', ' 사직동', '광화문풍림스페이스본(9-0)', '2008', '126.34',
-        # '14', '2018', '7', '11~20', '119000', '9')
-        querys = []
+        # ('서울특별시 종로구', # ' 사직동', # '광화문풍림스페이스본(9-0)',
+        # '2008', # '126.34', '14',
+        # '2018', '7', '11~20',
+        # '119000', '9')
         query = ''' UPDATE realestate SET trade_price="%s" \
                     WHERE district="%s" AND dong="%s" AND apt_name="%s" AND \
                     apt_built_year="%s" AND apt_size="%s" AND \
                     apt_floor="%s" AND r_year="%s" AND r_month="%s" AND \
                     r_day="%s" AND addr_num="%s" ''' % (
                 row[9],
-                row[0], row[1], row[2], row[3], row[4], 
-                row[5], row[6], row[7], row[8], row[10])
-        querys.append(query)
+                row[0], row[1], row[2],
+                row[3], row[4], row[5],
+                row[6], row[7], row[8],
+                row[10])
         print(query)
-        return
+        querys.append(query)
         row = cursor.fetchone()
 
     for query in querys:
         cursor.execute(query)
     conn.commit()
     return
+
+
 '''
 Trade
 종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
 ['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
 '''
 if __name__ == '__main__':
-    conn = MySQLdb.connect(user='root', db="andre")
+    conn = MySQLdb.connect(user='root', db="test")
     cursor = conn.cursor()
     # insert db
     #
-    # realstate_trade(conn, cursor)
+    realstate_info(conn, cursor)
     #
     # merge db
-    # realstate_merge(conn, cursor)
+    realstate_merge(conn, cursor)
     realstate_merge2(conn, cursor)
 
-    
-    # rx = pd.ExcelWriter('/Users/andre.jeon/git/JP_news/realestate.xlsx')
-    # df_mysql = pd.read_sql('select * from realestate_trade;', con=conn)
-    # df_mysql.to_excel(rx, 'trade')
-    # df_mysql = pd.read_sql('select * from realestate_rent;', con=conn)
-    # df_mysql.to_excel(rx, 'rent')
-    # rx.save()
+    rx = pd.ExcelWriter('/Users/byungwoo/git/JP_News/realestate.xlsx')
+    df_mysql = pd.read_sql('SELECT * FROM realestate WHERE trade_price IS NOT NULL;', con=conn)
+    df_mysql.to_excel(rx, 'total')
+    df_mysql = pd.read_sql('SELECT * FROM realestate_trade;', con=conn)
+    df_mysql.to_excel(rx, 'trade')
+    df_mysql = pd.read_sql('SELECT * FROM realestate_rent;', con=conn)
+    df_mysql.to_excel(rx, 'rent')
+    rx.save()
     conn.close()
