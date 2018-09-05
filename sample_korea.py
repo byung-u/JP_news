@@ -317,14 +317,14 @@ def realstate_write_excel(conn):
     filename = '/Users/byungwoo/git/JP_News/realestate_%04d%02d%02d.xlsx' % (now.year, now.month, now.day)
     rx = pd.ExcelWriter(filename)
     df_mysql = pd.read_sql('SELECT * FROM realestate WHERE trade_price IS NOT NULL AND gap_price IS NOT NULL;', con=conn)
-    df_mysql.to_excel(rx, 'total')
+    df_mysql.to_excel(rx, 'total', index=False)
     rx.save()
     filename = '/Users/byungwoo/git/JP_News/realestate_huge_%04d%02d%02d.xlsx' % (now.year, now.month, now.day)
     rx = pd.ExcelWriter(filename)
     df_mysql = pd.read_sql('SELECT * FROM realestate_trade;', con=conn)
-    df_mysql.to_excel(rx, 'trade')
+    df_mysql.to_excel(rx, 'trade', index=False)
     df_mysql = pd.read_sql('SELECT * FROM realestate_rent;', con=conn)
-    df_mysql.to_excel(rx, 'rent')
+    df_mysql.to_excel(rx, 'rent', index=False)
     rx.save()
 
 
