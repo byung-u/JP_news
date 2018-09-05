@@ -192,14 +192,14 @@ def request_realstate_rent(request_url, district, conn, cursor):
 
 def realstate_info(conn, cursor):
     now = datetime.now()
-    # time_str = '%4d%02d' % (now.year, now.month)
-    time_str = '%4d06' % (now.year)
-    apt_trade_url = os.environ.get('DATA_APT_TRADE_URL')
-    apt_rent_url = os.environ.get('DATA_APT_RENT_URL')
-    data_svc_key = os.environ.get('DATA_APT_API_KEY')
+    for i in range(3):
+        time_str = '%4d%02d' % (now.year, (now.month - 1))
+        apt_trade_url = os.environ.get('DATA_APT_TRADE_URL')
+        apt_rent_url = os.environ.get('DATA_APT_RENT_URL')
+        data_svc_key = os.environ.get('DATA_APT_API_KEY')
 
-    get_trade_price(data_svc_key, apt_trade_url, time_str, conn, cursor)
-    get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor)
+        get_trade_price(data_svc_key, apt_trade_url, time_str, conn, cursor)
+        get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor)
     return
 
 
@@ -218,6 +218,12 @@ def get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor):
 
 
 def realstate_merge(conn, cursor):
+    # copy_table(conn, cursor)
+    # insert_trade_price(conn, cursor)
+    insert_gap_price(conn, cursor)
+
+
+def copy_table(conn, cursor):
     cursor.execute('select * from realestate_rent')
     row = cursor.fetchone()
     querys = []
@@ -249,7 +255,7 @@ def realstate_merge(conn, cursor):
     return
 
 
-def realstate_merge2(conn, cursor):
+def insert_trade_price(conn, cursor):
     #  가장 중요한 부분인데 방법을 어찌 찾을까나
     cursor.execute('select * from realestate_trade')
     row = cursor.fetchone()
@@ -261,13 +267,13 @@ def realstate_merge2(conn, cursor):
         # '119000', '9')
         query = ''' UPDATE realestate SET trade_price="%s" \
                     WHERE district="%s" AND dong="%s" AND apt_name="%s" AND \
-                    apt_built_year="%s" AND apt_size="%s" AND \
-                    apt_floor="%s" AND r_year="%s" AND r_month="%s" AND \
-                    r_day="%s" AND addr_num="%s" ''' % (
+                    apt_built_year="%s" AND apt_size="%s" AND  apt_floor="%s" AND \
+                    r_year="%s" AND r_month="%s" AND \
+                    addr_num="%s" ''' % (
                 row[9],
                 row[0], row[1], row[2],
                 row[3], row[4], row[5],
-                row[6], row[7], row[8],
+                row[6], row[7],
                 row[10])
         print(query)
         querys.append(query)
@@ -279,28 +285,67 @@ def realstate_merge2(conn, cursor):
     return
 
 
-'''
-Trade
-종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
-['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
-'''
-if __name__ == '__main__':
-    conn = MySQLdb.connect(user='root', db="test")
-    cursor = conn.cursor()
-    # insert db
-    #
-    realstate_info(conn, cursor)
-    #
-    # merge db
-    realstate_merge(conn, cursor)
-    realstate_merge2(conn, cursor)
+def insert_gap_price(conn, cursor):
+    cursor.execute('select * from realestate WHERE trade_price IS NOT NULL AND monthly_price = 0')
+    row = cursor.fetchone()
+    querys = []
+    while row is not None:
+        gap_price = int(row[9]) - int(row[10])
+        # 0-2 '서울특별시 종로구', ' 숭인동', '종로중흥S클래스',
+        # 3-5 '2013', '17.811', '16',
+        # 6-8 '2018', '7', '1~10',
+        # 9-13 '13900', '12500', '0', None, '202-3')
+        query = ''' UPDATE realestate SET gap_price="%d" \
+                    WHERE district="%s" AND dong="%s" AND apt_name="%s" AND \
+                    apt_built_year="%s" AND apt_size="%s" AND apt_floor="%s" AND \
+                    r_year="%s" AND r_month="%s" AND addr_num="%s" AND monthly_price=0 ''' % (
+                gap_price,
+                row[0], row[1], row[2],
+                row[3], row[4], row[5],
+                row[6], row[7], row[13])
+        querys.append(query)
+        row = cursor.fetchone()
 
-    rx = pd.ExcelWriter('/Users/byungwoo/git/JP_News/realestate.xlsx')
-    df_mysql = pd.read_sql('SELECT * FROM realestate WHERE trade_price IS NOT NULL;', con=conn)
+    for query in querys:
+        cursor.execute(query)
+    conn.commit()
+    return
+
+
+def realstate_write_excel(conn):
+    now = datetime.now()
+    filename = '/Users/byungwoo/git/JP_News/realestate_%04d%02d%02d.xlsx' % (now.year, now.month, now.day)
+    rx = pd.ExcelWriter(filename)
+    df_mysql = pd.read_sql('SELECT * FROM realestate WHERE trade_price IS NOT NULL AND gap_price IS NOT NULL;', con=conn)
     df_mysql.to_excel(rx, 'total')
+    rx.save()
+    filename = '/Users/byungwoo/git/JP_News/realestate_huge_%04d%02d%02d.xlsx' % (now.year, now.month, now.day)
+    rx = pd.ExcelWriter(filename)
     df_mysql = pd.read_sql('SELECT * FROM realestate_trade;', con=conn)
     df_mysql.to_excel(rx, 'trade')
     df_mysql = pd.read_sql('SELECT * FROM realestate_rent;', con=conn)
     df_mysql.to_excel(rx, 'rent')
     rx.save()
+
+
+'''
+Trade
+종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
+'''
+
+
+def main():
+    conn = MySQLdb.connect(user='root', password='alsrud2', db="andre")
+    cursor = conn.cursor()
+    # insert db
+    realstate_info(conn, cursor)
+    # merge db
+    realstate_merge(conn, cursor)
+    # write excel
+    realstate_write_excel(conn)
     conn.close()
+
+
+if __name__ == '__main__':
+    main()
