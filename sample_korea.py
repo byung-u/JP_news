@@ -13,20 +13,6 @@ from loc_code import LOC_CODE
 
 # 10년치는 max 8개 (6월부터니까 다 하고나서 6월부터 다시 받도록)
 # 파주시 아동동 실패남
-# def is_exist_trade(district, dong, apt_name,
-#                   apt_built_year, apt_size, apt_floor, apt_trade_year,
-#                   apt_trade_month, apt_trade_day, trade_price):
-#    query = '''SELECT * FROM realestate_trade WHERE \
-#               district="%s" AND dong="%s" AND apt_name="%s" AND \
-#               apt_built_year="%s" AND apt_size="%s" AND apt_floor="%s" AND \
-#               trade_year="%s" AND trade_month="%s" AND trade_day="%s" AND
-#               trade_price="%s"
-#    ''' % (district, dong, apt_name, apt_built_year, apt_size, apt_floor,
-#           apt_trade_year, apt_trade_month, apt_trade_day, trade_price)
-#    return False
-# return jp_sqlite3_select(conn, cursor, query)
-
-
 def request_realstate_trade(request_url, district, conn, cursor):
     req = urllib.request.Request(request_url)
     try:
@@ -74,14 +60,6 @@ def request_realstate_trade(request_url, district, conn, cursor):
                 addr_num = info  # 지번
             elif idx == 10:
                 apt_floor = info
-        # trade_date = '%s-%02d-%s' % (apt_trade_year, int(apt_trade_month), apt_trade_day)
-        # if is_exist_trade(district, dong, apt_name,
-        #                   apt_built_year, apt_size, apt_floor, apt_trade_year,
-        #                  apt_trade_month, apt_trade_day, trade_price) is True:
-        #    continue
-        # msg = "%s %s %s, %s/%s층 %s" % (
-        #       district, dong, apt_name, apt_size, apt_floor, trade_price)
-        # print(msg)
         query = ''' INSERT INTO realestate_trade ( \
                         district, dong, apt_name, apt_built_year, \
                         apt_size, apt_floor, trade_year, \
@@ -158,11 +136,6 @@ def request_realstate_rent(request_url, district, conn, cursor):
                 apt_floor = info
 # ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
 # ['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
-        # trade_date = '%s-%02d-%s' % (apt_trade_year, int(apt_trade_month), apt_trade_day)
-        # if is_exist_trade(district, dong, apt_name,
-        #                  apt_built_year, apt_size, apt_floor, apt_trade_year,
-        #                  apt_trade_month, apt_trade_day, trade_price) is True:
-        #    continue
         query = ''' INSERT INTO realestate_rent ( \
                         district, dong, apt_name, apt_built_year, \
                         apt_size, apt_floor, rent_year, \
@@ -218,8 +191,8 @@ def get_rent_price(data_svc_key, apt_rent_url, time_str, conn, cursor):
 
 
 def realstate_merge(conn, cursor):
-    # copy_table(conn, cursor)
-    # insert_trade_price(conn, cursor)
+    copy_table(conn, cursor)
+    insert_trade_price(conn, cursor)
     insert_gap_price(conn, cursor)
 
 
@@ -255,8 +228,7 @@ def copy_table(conn, cursor):
     return
 
 
-def insert_trade_price(conn, cursor):
-    #  가장 중요한 부분인데 방법을 어찌 찾을까나
+def insert_trade_price(conn, cursor):  # 가장 중요한 부분인데 방법을 어찌 찾을까나
     cursor.execute('select * from realestate_trade')
     row = cursor.fetchone()
     querys = []
@@ -330,7 +302,8 @@ def realstate_write_excel(conn):
 
 '''
 Trade
-종로구 ['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
+종로구
+['   130,000', '2008', '2018', ' 무악동', '인왕산아이파크', '1', '21~31', '157.289', '60', '11110', '11']
 ['', '2007', '2018', ' 필운동', '    36,000', '신동아블루아광화문의 꿈', '7', '         0', '1~10', '108.95', '254', '11110', '8']
 '''
 
