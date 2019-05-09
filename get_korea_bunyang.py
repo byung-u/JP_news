@@ -74,7 +74,7 @@ def realestate_dapt_bunyang():
     r = request_and_get(url)
     if r is None:
         return
-    print('\n\n🌇  닥터아파트 분양캘린더\n', url)
+    print('🌇  닥터아파트 분양캘린더\n', url)
     soup = BeautifulSoup(r.content.decode('euc-kr', 'replace'), 'html.parser')
     for esale_cal_topbox in soup.find_all(match_soup_class(['esale_cal_topbox'])):
         for li in esale_cal_topbox.find_all('li'):
@@ -94,10 +94,9 @@ def realestate_dapt_bunyang():
 
 def main():
     today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
-    print('(JP)')
-    print([today], '부동산 분양 캘린더 모음\n')
+    print([today], '부동산 분양 캘린더\n')
 
-    realestate_kb_bunyang()                 # KB 분양
+    # realestate_kb_bunyang()                 # KB 분양
     realestate_dapt_bunyang()               # 닥터아파트 분양
 
 
