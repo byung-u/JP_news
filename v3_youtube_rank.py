@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+import os
 import time
 from datetime import datetime
 from apiclient.discovery import build
@@ -13,15 +15,18 @@ from oauth2client.tools import argparser
 # tab of
 #   https://cloud.google.com/console
 # Please ensure that you have enabled the YouTube Data API for your project.
-DEVELOPER_KEY = "AIzaSyCMTfjR6V0z6kOhRy0yqnnSn4uWyFRqvSI"
+DEVELOPER_KEY = os.environ.get('YOUTUBE_SEARCH_KEY')
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
 
-def youtube_search(options):
+def youtube_search(options, minus_day):
     youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
     now = datetime.now()
-    publishedAfter = "%04d-%02d-%02dT00:00:00Z" % (now.year, now.month, now.day - 1)
+    if minus_day == 30:
+        publishedAfter = "%04d-%02d-%02dT00:00:00Z" % (now.year, now.month - 1, now.day)
+    else:
+        publishedAfter = "%04d-%02d-%02dT00:00:00Z" % (now.year, now.month, now.day - minus_day)
     # Call the search.list method to retrieve results matching the specified
     # query term.
     search_response = youtube.search().list(
@@ -47,20 +52,41 @@ def youtube_search(options):
                   publishedAt.replace('T', ' ')[:-5])
         videos.append(msg)
 
-    today = "%02d/%02d ~ %02d/%02d" % (now.month, now.day - 1, now.month, now.day)
-    print "[ Youtube %s ]" % today
-    print "TOP 5 viewer count \n\n"
-    print "\n".join(videos)
+    if minus_day == 30:
+        today = "%02d/%02d ~ %02d/%02d" % (now.month - 1, now.day, now.month, now.day)
+    else:
+        today = "%02d/%02d ~ %02d/%02d" % (now.month, now.day - minus_day, now.month, now.day)
+    if minus_day == 1:
+        print "[Daily] 조회수 기준 상위 5개\n", today
+        print "\n".join(videos)
+    elif minus_day == 7:
+        print "[Weekly] 조회수 기준 상위 5개\n", today
+        print "\n".join(videos)
+    elif minus_day == 30:
+        print "[Monthly] 조회수 기준 상위 5개\n", today
+        print "\n".join(videos)
 
 
-if __name__ == "__main__":
-    argparser.add_argument("--q", help="Search term", default="Realestate")
-    argparser.add_argument("--max-results", help="Max results", default=25)
+def main():
+    print "[ Beta Youtube 링크 모음 ]"
+    argparser.add_argument("--q", help="Search term", default="부동산")
+    argparser.add_argument("--max-results", help="Max results", default=5)
     argparser.add_argument("--order", help="order type", default="viewCount")
     # "[u'date', u'rating', u'relevance', u'title', u'videoCount', u'viewCount']"
     args = argparser.parse_args()
 
-    try:
-        youtube_search(args)
-    except HttpError, e:
-        print "An HTTP error %d occurred:\n%s" % (e.resp.status, e.content)
+    youtube_search(args, 1)
+    print('\n\n')
+    youtube_search(args, 7)
+    print('\n\n')
+    youtube_search(args, 30)
+
+    # try:
+    #     youtube_search(args, 1)
+    # except HttpError, e:
+    #     print "An HTTP error %d occurred:\n%s" % (e.resp.status, e.content)
+
+
+if __name__ == "__main__":
+    main()
+
